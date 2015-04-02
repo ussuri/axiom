@@ -65,7 +65,6 @@ module.exports = function(grunt) {
         dest: 'lib/axiom/version.js'
       },
       wash: {
-        version: pkg.version,
         dest: 'lib/wash/version.js'
       }
     },
@@ -117,6 +116,10 @@ module.exports = function(grunt) {
               '!tmp/amd/lib/axiom/**/*.test.js'],
         dest: 'dist/axiom_base/amd/lib/axiom_base.amd.concat.js'
       },
+      chrome_agent_client: {
+        src: ['chrome_agent/chrome_agent_client/client.js'],
+        dest: 'dist/chrome_agent_client/amd/lib/chrome_agent_client.amd.concat.js'
+      },
       wash: {
         src: ['tmp/amd/lib/wash/**/*.js',
               '!tmp/amd/lib/wash/**/*.test.js'],
@@ -133,6 +136,20 @@ module.exports = function(grunt) {
               dest: 'dist/axiom_base/amd'},
           {expand: true, cwd: '', src: ['lib/axiom/**/*.js',
               '!package_dist.json'], dest: 'dist/axiom_base/es6'}
+        ]
+      },
+      chrome_agent_client: {
+        files: [
+          {expand: true, cwd: 'tmp/cjs/', 
+              src: ['chrome_agent_client/**/*.js',
+                    'chrome_agent_client/**/*.js.map'], 
+              dest: 'dist/chrome_agent_client/cjs'},
+          {expand: true, cwd: 'tmp/amd/', 
+              src: ['chrome_agent_client/**/*.js'],
+              dest: 'dist/chrome_agent_client/amd'},
+          {expand: true, cwd: '', 
+              src: ['lib/wash/**/*.js'], 
+              dest: 'dist/chrome_agent_client/es6'}
         ]
       },
       wash_dist: {
@@ -155,6 +172,12 @@ module.exports = function(grunt) {
         {
           expand: true,
           cwd: 'dist/axiom_wash/amd/lib/',
+          src: ['*.js'],
+          dest: 'tmp/samples/web_shell/js/'
+        },
+        {
+          expand: true,
+          cwd: 'dist/chrome_agent_client/amd/lib/',
           src: ['*.js'],
           dest: 'tmp/samples/web_shell/js/'
         },
@@ -235,12 +258,6 @@ module.exports = function(grunt) {
         ],
         cssrefs: [
           'css/**/*.css'
-        ],
-        links: [
-          {
-            rel: 'chrome-webstore-item',
-            href: 'https://chrome.google.com/webstore/detail/lfbhahfblgmngkkgbgbccedhhnkkhknb'
-          }
         ]
       },
 
@@ -313,7 +330,10 @@ module.exports = function(grunt) {
         files: [{
           expand: true,
           cwd: 'lib/',
-          src: ['**/*.js'],
+          src: [
+            '**/*.js',
+            '!chrome_agent/chrome_agent_extension/**/*'
+          ],
           dest: 'tmp/amd/lib/'
         }]
       },
@@ -324,7 +344,10 @@ module.exports = function(grunt) {
         files: [{
           expand: true,
           cwd: 'lib/',
-          src: ['**/*.js'],
+          src: [
+            '**/*.js',
+            '!chrome_agent/chrome_agent_extension/**/*'
+          ],
           dest: 'tmp/cjs/lib/'
         }]
       },
@@ -402,6 +425,7 @@ module.exports = function(grunt) {
                               'concat:axiom_base',
                               'concat:wash',
                               'copy:axiom_dist',
+                              'copy:chrome_agent_client',
                               'copy:wash_dist',
                               'make_package_json']);
 
