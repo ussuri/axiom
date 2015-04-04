@@ -12,14 +12,14 @@
   "background": {
     "persistent": true,
     "scripts": [
-      "scripts/agent_background.js"
+      "scripts/background.js"
     ]
   },
 
   "content_scripts": [
     {
       "js": [
-        "scripts/agent_content_script.js"
+        "scripts/content_script.js"
       ],
       "matches": [
         "https://localhost:8080/**/web_shell/index.html",

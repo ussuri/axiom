@@ -39,6 +39,8 @@ module.exports = function(grunt) {
         cwd: 'lib/',
         js: ['**/*.js',
              '../third_party/closure-compiler/contrib/externs/jasmine.js',
+             '../chrome_agent/client/client.js',
+             '../chrome_agent/extension/scripts/background.js',
              '../externs/google_api/google_api.js',
              '../externs/google_api/chrome_api.js',
              '../tmp/third_party/dcodeIO/fs.js',
@@ -120,7 +122,8 @@ module.exports = function(grunt) {
       },
       wash: {
         src: ['tmp/amd/lib/wash/**/*.js',
-              '!tmp/amd/lib/wash/**/*.test.js'],
+              '!tmp/amd/lib/wash/**/*.test.js',
+              '../chrome_agent/client/client.js'],
         dest: 'dist/axiom_wash/amd/lib/wash.amd.concat.js'
       }
     },
@@ -190,6 +193,12 @@ module.exports = function(grunt) {
           src: 'third_party/idb.filesystem.js/idb.filesystem.js',
           dest: 'tmp/samples/web_shell/polyfill/idb.filesystem.js/idb.filesystem.js'
         }]
+        // {
+        //   expand: true,
+        //   cwd: 'chrome_agent/client',
+        //   src: ['**/*.js'],
+        //   dest: 'tmp/samples/web_shell/js/'
+        // }]
       },
       samples_use_globals_files: {
         files: [{
