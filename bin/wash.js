@@ -58,8 +58,11 @@ function startWash(fsm) {
       });
 
       process.stdin.on('data', function(buffer) {
-        if (buffer == '\x03')
-          cx.closeError(new AxiomError.Interrupt());
+        // Ctrl-C
+        if (buffer == '\x03') {
+          stdioSource.signal.write({name: 'interrupt'});
+          return;
+        }
 
         stdioSource.stdin.write(buffer.toString());
       });
@@ -67,11 +70,13 @@ function startWash(fsm) {
       onResize(stdioSource);
       process.stdout.on('resize', onResize.bind(null, stdioSource));
 
-      var home = 'nodefs:' + process.env.HOME;
-      cx.setEnv('$HOME', home);
-      cx.setEnv('$HISTFILE', home + '/.wash_history');
-      cx.setEnv('$PWD', 'nodefs:' + process.env.PWD);
-      cx.setEnv('@PATH', ['jsfs:exe']);
+      var home = new Path('nodefs:').combine(process.env.HOME);
+      cx.setEnv('$HOME', home.spec);
+      cx.setEnv('$HISTFILE', home.combine('.wash_history').spec);
+      if (process.env.PWD) {
+        cx.setEnv('$PWD', new Path('nodefs:').combine(process.env.PWD).spec);
+      }
+      cx.setEnv('@PATH', [new Path('jsfs:exe').spec]);
 
       return cx.execute();
     });
