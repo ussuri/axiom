@@ -12,11 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import AxiomError from 'axiom/core/error';
-import Completer from 'axiom/core/completer';
-
 export var chromeAgentClient = {};
 export default chromeAgentClient;
+
+/**
+ * @constructor
+ */
+chromeAgentClient.ErrorSendingRequest = function(message) {
+  this.message = message;
+};
+
+/**
+ * @constructor
+ */
+chromeAgentClient.ErrorExecutingRequest = function(message) {
+  this.message = message;
+};
 
 chromeAgentClient.AGENT_APP_ID_ = 'lfbhahfblgmngkkgbgbccedhhnkkhknb';
 chromeAgentClient.AGENT_INSTALL_URL_ =
@@ -24,6 +35,9 @@ chromeAgentClient.AGENT_INSTALL_URL_ =
     chromeAgentClient.AGENT_APP_ID_;
 
 /**
+ * Open a new tab with the Agent extension's page in Chrome Web Store,
+ * allowing the user to install it.
+ *
  * @return {void}
  */
 chromeAgentClient.installAgent = function() {
@@ -31,6 +45,10 @@ chromeAgentClient.installAgent = function() {
 };
 
 /**
+ * Open a new tab with the official documentation for the given
+ * Chrome Extensions API, or the top page of the documentation if no API is
+ * provided.
+ *
  * @param {string} api
  * @return {void}
  */
@@ -53,6 +71,9 @@ chromeAgentClient.openApiOnlineDoc = function(api) {
 };
 
 /**
+ * Request the Agent extension to invoke the given API with the given arguments
+ * and options. The result of the invocation is passed back asynchronously.
+ * 
  * @param {!string} api
  * @param {!Array<*>} args
  * @param {!{timeout: number}} options
@@ -72,6 +93,27 @@ chromeAgentClient.callApi = function(api, args, options) {
 };
 
 /**
+ * Request the Agent extension to execute a script in the given tabs' 
+ * "isolated world" (with full access to the DOM context but not the
+ * JavaScript context).
+ * 
+ * The result of the executions is passed back as a single value for a single
+ * requested tab, or as a map of form { tabId1: result1, ... } for multiple
+ * requested tabs (special values 'all' and 'window' are considered multiple
+ * tabs even if they resolve to just one).
+ * 
+ * The execution is resilient to errors and/or timeouts in individual tabs,
+ * which can happen for various reasons (the script itself never returns or
+ * attempts to return too much data; a tab may be hung ("Aw, snap!"); a tab may
+ * be a special chrome:// tab, in which scripts are prohibited and error out).
+ * Such errors are returned in the results map as special string values.
+ *
+ * Request the Agent extension to execute the given script in the given list
+ * of tabs, with the given options. The result of the executions is passed back 
+ * as a single value for a single requested tab, or as a map of form
+ * { tabId1: result1, ... } for multiple requested tabs (special values 'all'
+ * and 'window' are considered multiple tabs even if they resolve to just one).
+ *
  * @param {!string} code
  * @param {!(Array<number>|string)} tabIds
  * @param {!{allFrames: boolean, runAt: string, timeout: number}} options
@@ -89,6 +131,16 @@ chromeAgentClient.executeScriptInTabs = function(code, tabIds, options) {
 };
 
 /**
+ * Request the Agent extension to insert the given CSS fragment into the given
+ * list of tabs, with the given options. If there are any errors, they are
+ * returned as a single string for a single requested tab, or as a map of form
+ * { tabId1: error1, ... } for multiple requested tabs (special values 'all'
+ * and 'window' are considered multiple tabs even if they resolve to just one).
+ * 
+ * Note that the author styles take precedence over any iserted styles, so
+ * if there is a clash for some setting, the inserted CSS will have no effect
+ * (this is the limitation of the underlying Chrome API).
+ *
  * @param {!string} css
  * @param {!(Array<number>|string)} tabIds
  * @param {!{allFrames: boolean, runAt: string, timeout: number}} options
@@ -106,6 +158,9 @@ chromeAgentClient.insertCssIntoTabs = function(css, tabIds, options) {
 };
 
 /**
+ * Send the given request to perform some service to the Agent extension and
+ * return back the result.
+ *
  * @param {!Object<string, *>} request
  * @return {!Promise<*>} Result returned by the API.
  */
@@ -116,12 +171,11 @@ chromeAgentClient.sendRequest_ = function(request) {
       request,
       {}, // options
       function(response) {
-        if (typeof response === 'undefined') {
-          reject(new AxiomError.Missing(
-              'Chrome Agent is not installed'));
+        if (chrome.runtime.lastError) {
+          reject(new chromeAgentClient.ErrorSendingRequest(
+              chrome.runtime.lastError.message));
         } else if (!response.success) {
-          reject(new AxiomError.Runtime(
-              'Chrome Agent error: ' + response.error));
+          reject(new chromeAgentClient.ErrorExecutingRequest(response.error));
         } else {
           resolve(response.result);
         }
